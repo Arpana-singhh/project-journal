@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Navbar from "../components/Navbar";
-import CreateProjectModal from "../components/CreateProjectModal";
+import Navbar from "../../components/Navbar";
+import CreateProjectModal from "../../components/CreateProjectModal";
 
 type Project = {
   id: string;

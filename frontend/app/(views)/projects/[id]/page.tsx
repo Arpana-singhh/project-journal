@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button, Input } from "antd";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../../components/Navbar";
 
 type Tab = "meetings" | "members" | "settings";
 

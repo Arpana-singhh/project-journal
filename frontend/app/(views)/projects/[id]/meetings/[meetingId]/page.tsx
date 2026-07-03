@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "antd";
-import Navbar from "../../../../components/Navbar";
+import Navbar from "../../../../../components/Navbar";
 
 type Note = {
   id: string;
