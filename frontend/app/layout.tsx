@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+import { ConfigProvider } from "antd";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./styles/global.scss";
+import theme from "./config/theme";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -26,7 +28,9 @@ export default function RootLayout({
       lang="en"
       className={poppins.variable}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ConfigProvider theme={theme}>{children}</ConfigProvider>
+      </body>
     </html>
   );
 }

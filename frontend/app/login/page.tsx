@@ -68,7 +68,6 @@ export default function LoginPage() {
         <button type="submit" className="auth-button" disabled={isSubmitting}>
           {isSubmitting ? "Logging in..." : "Log in"}
         </button>
-        <p>test</p>
       </form>
     </AuthLayout>
   );
