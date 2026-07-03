@@ -1,0 +1,150 @@
+@use './mixin.scss' as *;
+
+// Shared color variables
+:root {
+    --color-primary: #1f6f5c;
+    --color-primary-hover: #175a4a;
+    --color-primary-light: #e6f2ef;
+    --color-text: #1a1a1a;
+    --color-text-muted: #6b7280;
+    --color-border: #d9dee3;
+    --color-surface: #ffffff;
+    --color-page-bg: #ffffff;
+    --color-danger: #b42318;
+
+    // Shared typography variable
+    --font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+}
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: var(--color-page-bg);
+    padding: 48px 0;
+
+    @include phone {
+        padding: 32px 0;
+    }
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--color-text);
+}
+
+.auth-logo-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.auth-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    @include transition(0.15s);
+}
+
+.auth-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.auth-subtitle {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.auth-label {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--color-text);
+    margin-bottom: 6px;
+    display: block;
+}
+
+.auth-input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    outline: none;
+    @include transition(0.15s);
+
+    &:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+}
+
+.auth-error {
+    color: var(--color-danger);
+    font-size: 13px;
+    margin-top: -12px;
+    margin-bottom: 12px;
+}
+
+.auth-button {
+    width: 100%;
+    background: var(--color-primary);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    @include transition(0.15s);
+
+    &:hover {
+        background: var(--color-primary-hover);
+        color: #fff;
+    }
+
+    &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--color-text-muted);
+}
+
+.auth-link {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--color-primary-hover);
+        text-decoration: underline;
+    }
+}
