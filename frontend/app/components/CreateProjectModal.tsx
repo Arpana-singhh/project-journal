@@ -1,19 +1,19 @@
 "use client";
 
 import { Modal, Input, Button } from "antd";
-import { Formik, Form, Field, type FieldProps } from "formik";
+import { Formik, Form, Field, type FieldProps, type FormikHelpers } from "formik";
+import { toast } from "react-toastify";
+import { ProjectService } from "../service/api/project.services";
 
 type CreateProjectValues = {
   name: string;
   key: string;
-  clientName: string;
   description: string;
 };
 
 const initialValues: CreateProjectValues = {
   name: "",
   key: "",
-  clientName: "",
   description: "",
 };
 
@@ -39,6 +39,25 @@ export default function CreateProjectModal({
   onClose,
   onCreate,
 }: CreateProjectModalProps) {
+  const handleSubmit = async (
+    values: CreateProjectValues,
+    { resetForm }: FormikHelpers<CreateProjectValues>
+  ) => {
+    try {
+      const project = await ProjectService.createProject(
+        values.name,
+        values.key,
+        values.description
+      );
+
+      toast.success(`Project "${project.projectName}" created successfully.`);
+      onCreate(values);
+      resetForm();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || "Could not create project.");
+    }
+  };
+
   return (
     <Modal
       title="Create project"
@@ -50,10 +69,7 @@ export default function CreateProjectModal({
       <Formik
         initialValues={initialValues}
         validate={validate}
-        onSubmit={(values, { resetForm }) => {
-          onCreate(values);
-          resetForm();
-        }}
+        onSubmit={handleSubmit}
       >
         {({ errors, touched, isSubmitting }) => (
           <Form className="create-project-form">
@@ -74,37 +90,22 @@ export default function CreateProjectModal({
               <p className="modal-field-error">{errors.name}</p>
             )}
 
-            <div className="modal-field-row">
-              <div className="modal-field-col">
-                <label className="modal-label" htmlFor="key">
-                  Project key <span className="required-mark">*</span>
-                </label>
-                <Field name="key">
-                  {({ field }: FieldProps) => (
-                    <Input
-                      {...field}
-                      id="key"
-                      placeholder="ACME-WEB"
-                      status={errors.key && touched.key ? "error" : ""}
-                    />
-                  )}
-                </Field>
-                {errors.key && touched.key && (
-                  <p className="modal-field-error">{errors.key}</p>
-                )}
-              </div>
-
-              <div className="modal-field-col">
-                <label className="modal-label" htmlFor="clientName">
-                  Client name
-                </label>
-                <Field name="clientName">
-                  {({ field }: FieldProps) => (
-                    <Input {...field} id="clientName" placeholder="Acme Corp" />
-                  )}
-                </Field>
-              </div>
-            </div>
+            <label className="modal-label" htmlFor="key">
+              Project key <span className="required-mark">*</span>
+            </label>
+            <Field name="key">
+              {({ field }: FieldProps) => (
+                <Input
+                  {...field}
+                  id="key"
+                  placeholder="ACME-WEB"
+                  status={errors.key && touched.key ? "error" : ""}
+                />
+              )}
+            </Field>
+            {errors.key && touched.key && (
+              <p className="modal-field-error">{errors.key}</p>
+            )}
 
             <label className="modal-label" htmlFor="description">
               Description

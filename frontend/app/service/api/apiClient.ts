@@ -1,7 +1,15 @@
 import axios from "axios";
 
+// Server-side callers (e.g. NextAuth's `authorize()`) talk to Express directly
+// using the private API_BASE_URL. Browser callers must never know that URL,
+// so they always go through the same-origin `/api/backend` proxy instead,
+// which attaches the backend Authorization header for them server-side.
+const isServer = typeof window === "undefined";
+
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api",
+  baseURL: isServer
+    ? process.env.API_BASE_URL || "http://localhost:5000/api"
+    : "/api/backend",
   headers: { Accept: "application/json" },
 });
 

@@ -9,7 +9,8 @@ declare module "next-auth" {
   }
 
   interface Session {
-    accessToken?: string;
+    // accessToken intentionally omitted: it must never reach the browser.
+    // It stays inside the JWT (HttpOnly cookie) and is only read server-side via getToken().
     user: {
       id: string;
       role?: string;

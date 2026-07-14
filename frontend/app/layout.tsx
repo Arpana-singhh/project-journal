@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { ConfigProvider } from "antd";
+import { ToastContainer } from "react-toastify";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import "react-toastify/dist/ReactToastify.css";
 import "./styles/global.scss";
 import theme from "./config/theme";
 import SessionProvider from "./providers/SessionProvider";
@@ -33,6 +35,7 @@ export default function RootLayout({
         <SessionProvider>
           <ConfigProvider theme={theme}>{children}</ConfigProvider>
         </SessionProvider>
+        <ToastContainer position="top-right" autoClose={3000} />
       </body>
     </html>
   );

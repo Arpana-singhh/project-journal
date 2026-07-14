@@ -63,7 +63,10 @@ const { handlers } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken as string;
+      // Do NOT copy token.accessToken onto session here - session is readable
+      // by browser JS via useSession(). The backend token stays inside the
+      // JWT/HttpOnly cookie and is only ever read server-side (see the
+      // backend proxy route, which uses getToken() to pull it out directly).
       session.user.id = token.sub as string;
       session.user.role = token.role as string;
       session.user.avatar = token.avatar as string;

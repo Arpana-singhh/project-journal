@@ -44,6 +44,7 @@ export const getProjectById = async (req, res) => {
 
         return res.status(200).json({
             success: true,
+            message: "Projects fetched successfully",
             project,
         });
     }
@@ -59,6 +60,7 @@ export const getAllProjects = async (req, res) => {
 
         return res.status(200).json({
             success: true,
+            message: "Project fetched successfully",
             projects,
         });
     }
