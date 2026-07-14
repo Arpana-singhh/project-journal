@@ -17,8 +17,8 @@ const userSchema = new mongoose.Schema(
         },
         role:{
             type:String,
-            enum:['owner', 'editor', 'viewer'],
-            default:'viewer',
+            enum:['owner', 'editor'],
+            default:'editor',
         },
         avatar:{
             type:String,

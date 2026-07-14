@@ -157,7 +157,6 @@ their own notes.
 -   \_id
 -   projectName
 -   projectKey
--   clientName
 -   description
 -   ownerId
 -   createdAt
