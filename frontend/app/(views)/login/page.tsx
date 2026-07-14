@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import AuthLayout from "../../components/AuthLayout";
 
-export default function LoginPage() { 
+export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,7 +23,18 @@ export default function LoginPage() {
     setError("");
     setIsSubmitting(true);
     try {
-      // TODO: wire up to auth API once available
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password.");
+        return;
+      }
+
+      router.push("/dashboard");
     } finally {
       setIsSubmitting(false);
     }

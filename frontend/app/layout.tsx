@@ -6,6 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./styles/global.scss";
 import theme from "./config/theme";
+import SessionProvider from "./providers/SessionProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,7 +30,9 @@ export default function RootLayout({
       className={poppins.variable}
     >
       <body className="min-h-full flex flex-col">
-        <ConfigProvider theme={theme}>{children}</ConfigProvider>
+        <SessionProvider>
+          <ConfigProvider theme={theme}>{children}</ConfigProvider>
+        </SessionProvider>
       </body>
     </html>
   );
