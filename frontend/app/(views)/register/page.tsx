@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import AuthLayout from "../../components/AuthLayout";
+import { AuthService } from "../../service/api/auth.services";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +28,18 @@ export default function RegisterPage() {
     setError("");
     setIsSubmitting(true);
     try {
-      // TODO: wire up to auth API once available
+      const data = await AuthService.register(name, email, password);
+
+      if (!data.success) {
+        setError(data.message || "Could not create account.");
+        return;
+      }
+
+      router.push("/login");
+    } catch (err) {
+      const message =
+        (err as { message?: string })?.message || "Could not create account.";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
