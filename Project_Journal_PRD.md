@@ -166,7 +166,7 @@ their own notes.
 
 -   \_id
 -   projectId
--   userId
+-   memberId
 -   role
 -   joinedAt
 
@@ -196,7 +196,8 @@ their own notes.
 -   token
 -   createdBy
 -   expiresAt
--   isUsed
+-   maxMembers (null = unlimited until expiry)
+-   memberCount
 
 ------------------------------------------------------------------------
 
