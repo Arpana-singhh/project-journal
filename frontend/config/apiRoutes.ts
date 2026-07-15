@@ -8,6 +8,9 @@ const apiRoutes = {
     list: "/projects",
     getById: (id: string) => `/projects/${id}`,
   },
+  invites: {
+    create: (projectId: string) => `/projects/${projectId}/invite`,
+  },
 };
 
 export default apiRoutes;

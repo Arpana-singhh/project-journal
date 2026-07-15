@@ -6,11 +6,13 @@ import { toast } from "react-toastify";
 import { FiPlus, FiUsers } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
 import CreateProjectModal from "../../components/CreateProjectModal";
+import AddMemberModal from "../../components/AddMemberModal";
 import { useGetAllProjectsAsModelsQuery } from "../../store/api/projectsApi";
 import { getApiErrorMessage } from "../../store/api/apiError";
 
 export default function ProjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [addMemberProjectId, setAddMemberProjectId] = useState<string | null>(null);
   const { data: projects = [], isLoading, error } = useGetAllProjectsAsModelsQuery();
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function ProjectsPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            setAddMemberProjectId(card.id);
                           }}
                         >
                           <FiPlus /> Add member
@@ -100,6 +103,12 @@ export default function ProjectsPage() {
         onCreate={() => {
           setIsModalOpen(false);
         }}
+      />
+
+      <AddMemberModal
+        open={addMemberProjectId !== null}
+        projectId={addMemberProjectId ?? ""}
+        onClose={() => setAddMemberProjectId(null)}
       />
     </>
   );
