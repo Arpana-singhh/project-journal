@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./styles/global.scss";
 import theme from "./config/theme";
 import SessionProvider from "./providers/SessionProvider";
+import { StoreProvider } from "./store/provider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -32,9 +33,11 @@ export default function RootLayout({
       className={poppins.variable}
     >
       <body className="min-h-full flex flex-col">
-        <SessionProvider>
-          <ConfigProvider theme={theme}>{children}</ConfigProvider>
-        </SessionProvider>
+        <StoreProvider>
+          <SessionProvider>
+            <ConfigProvider theme={theme}>{children}</ConfigProvider>
+          </SessionProvider>
+        </StoreProvider>
         <ToastContainer position="top-right" autoClose={3000} />
       </body>
     </html>

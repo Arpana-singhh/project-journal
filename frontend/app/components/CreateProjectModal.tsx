@@ -3,7 +3,10 @@
 import { Modal, Input, Button } from "antd";
 import { Formik, Form, Field, type FieldProps, type FormikHelpers } from "formik";
 import { toast } from "react-toastify";
-import { ProjectService } from "../service/api/project.services";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import type { SerializedError } from "@reduxjs/toolkit";
+import { useCreateProjectAsModelMutation } from "../store/api/projectsApi";
+import { getApiErrorMessage } from "../store/api/apiError";
 
 type CreateProjectValues = {
   name: string;
@@ -39,22 +42,24 @@ export default function CreateProjectModal({
   onClose,
   onCreate,
 }: CreateProjectModalProps) {
+  const [createProject] = useCreateProjectAsModelMutation();
+
   const handleSubmit = async (
     values: CreateProjectValues,
     { resetForm }: FormikHelpers<CreateProjectValues>
   ) => {
     try {
-      const project = await ProjectService.createProject(
-        values.name,
-        values.key,
-        values.description
-      );
+      const project = await createProject({
+        projectName: values.name,
+        projectKey: values.key,
+        description: values.description,
+      });
 
       toast.success(`Project "${project.projectName}" created successfully.`);
       onCreate(values);
       resetForm();
     } catch (err) {
-      toast.error((err as { message?: string })?.message || "Could not create project.");
+      toast.error(getApiErrorMessage(err as FetchBaseQueryError | SerializedError));
     }
   };
 

@@ -6,28 +6,16 @@ import { toast } from "react-toastify";
 import { FiPlus, FiUsers } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
 import CreateProjectModal from "../../components/CreateProjectModal";
-import { ProjectService } from "../../service/api/project.services";
-import { ProjectModel } from "../../models/project.model";
+import { useGetAllProjectsAsModelsQuery } from "../../store/api/projectsApi";
+import { getApiErrorMessage } from "../../store/api/apiError";
 
 export default function ProjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [projects, setProjects] = useState<ProjectModel[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadProjects = async () => {
-    try {
-      const data = await ProjectService.getAllProjects();
-      setProjects(data);
-    } catch (err) {
-      toast.error((err as { message?: string })?.message || "Could not load projects.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: projects = [], isLoading, error } = useGetAllProjectsAsModelsQuery();
 
   useEffect(() => {
-    loadProjects();
-  }, []);
+    if (error) toast.error(getApiErrorMessage(error));
+  }, [error]);
 
   const ownedCount = projects.filter((p) => p.role === "owner").length;
   const joinedCount = projects.length - ownedCount;
@@ -111,7 +99,6 @@ export default function ProjectsPage() {
         onClose={() => setIsModalOpen(false)}
         onCreate={() => {
           setIsModalOpen(false);
-          loadProjects();
         }}
       />
     </>

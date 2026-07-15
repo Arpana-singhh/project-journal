@@ -22,7 +22,7 @@ export default function AuthLayout({
     <div className="auth-page">
       <div className="container">
         <div className="row justify-content-center">
-          <div className="col-12 col-sm-10 col-md-6">
+          <div className="col-12 col-sm-10 col-md-4">
             <div className="auth-brand">
               <span className="auth-logo-badge">PJ</span>
               <span>Project Journal</span>

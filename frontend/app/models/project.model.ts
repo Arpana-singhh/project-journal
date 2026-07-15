@@ -31,9 +31,21 @@ export type GetProjectByIdApiResponse = {
   project: RawProject;
 };
 
+export type UpdateProjectApiResponse = {
+  success: boolean;
+  message: string;
+  project: RawProject;
+};
+
 export type CreateProjectPayload = {
   projectName: string;
   projectKey: string;
+  description?: string;
+};
+
+export type UpdateProjectPayload = {
+  projectName?: string;
+  projectKey?: string;
   description?: string;
 };
 

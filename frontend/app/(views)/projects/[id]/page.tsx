@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button, Input } from "antd";
 import { toast } from "react-toastify";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import type { SerializedError } from "@reduxjs/toolkit";
 import Navbar from "../../../components/Navbar";
-import { ProjectService } from "../../../service/api/project.services";
-import { ProjectModel } from "../../../models/project.model";
+import ConfirmModal from "../../../components/ConfirmModal";
+import {
+  useGetProjectByIdAsModelQuery,
+  useUpdateProjectAsModelMutation,
+  useDeleteProjectMutation,
+} from "../../../store/api/projectsApi";
+import { getApiErrorMessage } from "../../../store/api/apiError";
 
 type Tab = "meetings" | "members" | "settings";
 
@@ -49,26 +56,57 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("meetings");
-  const [project, setProject] = useState<ProjectModel | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: project, isLoading, error } = useGetProjectByIdAsModelQuery(params.id, {
+    skip: !params.id,
+  });
+  const [updateProject, { isLoading: isSaving }] = useUpdateProjectAsModelMutation();
+  const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [settingsForm, setSettingsForm] = useState({
+    projectName: "",
+    projectKey: "",
+    description: "",
+  });
 
-  const loadProject = async () => {
+  useEffect(() => {
+    if (error) toast.error(getApiErrorMessage(error));
+  }, [error]);
+
+  useEffect(() => {
+    if (project) {
+      setSettingsForm({
+        projectName: project.projectName,
+        projectKey: project.projectKey,
+        description: project.description,
+      });
+    }
+  }, [project?.projectId]);
+
+  const handleSaveSettings = async () => {
     if (!params.id) return;
 
     try {
-      const data = await ProjectService.getProjectById(params.id);
-      setProject(data);
+      const updated = await updateProject(params.id, settingsForm);
+      toast.success(`Project "${updated.projectName}" updated successfully.`);
     } catch (err) {
-      toast.error((err as { message?: string })?.message || "Could not load project.");
-    } finally {
-      setIsLoading(false);
+      toast.error(getApiErrorMessage(err as FetchBaseQueryError | SerializedError));
     }
   };
 
-  useEffect(() => {
-    loadProject();
-  }, [params.id]);
+  const handleDeleteProject = async () => {
+    if (!params.id) return;
+
+    try {
+      await deleteProject(params.id).unwrap();
+      toast.success("Project deleted successfully.");
+      setIsDeleteModalOpen(false);
+      router.push("/projects");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err as FetchBaseQueryError | SerializedError));
+    }
+  };
 
   if (isLoading || !project) {
     return (
@@ -80,6 +118,8 @@ export default function ProjectDetailPage() {
       </>
     );
   }
+
+  const visibleTabs = TABS.filter((tab) => tab.id !== "settings" || project.role === "owner");
 
   return (
     <>
@@ -108,7 +148,7 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="project-tabs">
-            {TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
@@ -172,19 +212,31 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {activeTab === "settings" && (
+          {activeTab === "settings" && project.role === "owner" && (
             <div className="settings-form">
               <label className="modal-label" htmlFor="project-name">
                 Project name
               </label>
-              <Input id="project-name" defaultValue={project.projectName} />
+              <Input
+                id="project-name"
+                value={settingsForm.projectName}
+                onChange={(e) =>
+                  setSettingsForm((prev) => ({ ...prev, projectName: e.target.value }))
+                }
+              />
 
               <div className="modal-field-row">
                 <div className="modal-field-col">
                   <label className="modal-label" htmlFor="project-key">
                     Project key
                   </label>
-                  <Input id="project-key" defaultValue={project.projectKey} />
+                  <Input
+                    id="project-key"
+                    value={settingsForm.projectKey}
+                    onChange={(e) =>
+                      setSettingsForm((prev) => ({ ...prev, projectKey: e.target.value }))
+                    }
+                  />
                 </div>
               </div>
 
@@ -194,11 +246,16 @@ export default function ProjectDetailPage() {
               <Input.TextArea
                 id="description"
                 rows={3}
-                defaultValue={project.description}
+                value={settingsForm.description}
+                onChange={(e) =>
+                  setSettingsForm((prev) => ({ ...prev, description: e.target.value }))
+                }
               />
 
               <div className="settings-save-row">
-                <Button type="primary">Save changes</Button>
+                <Button type="primary" loading={isSaving} onClick={handleSaveSettings}>
+                  Save changes
+                </Button>
               </div>
 
               <div className="danger-zone">
@@ -206,12 +263,25 @@ export default function ProjectDetailPage() {
                 <p className="danger-zone-text">
                   Deleting a project removes all its meetings and notes. This can&apos;t be undone.
                 </p>
-                <Button danger>Delete project</Button>
+                <Button danger onClick={() => setIsDeleteModalOpen(true)}>
+                  Delete project
+                </Button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={isDeleteModalOpen}
+        title="Delete project"
+        message={`Are you sure you want to delete "${project.projectName}"? This can't be undone.`}
+        confirmText="Yes, delete"
+        danger
+        isLoading={isDeleting}
+        onConfirm={handleDeleteProject}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      />
     </>
   );
 }
