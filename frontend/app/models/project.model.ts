@@ -9,6 +9,8 @@ export type RawProject = {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  role?: "owner" | "editor";
+  memberCount?: number;
 };
 
 export type CreateProjectApiResponse = {
@@ -37,6 +39,8 @@ export class ProjectModel {
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;
+  role: "owner" | "editor";
+  memberCount: number;
 
   constructor(raw: RawProject) {
     this.projectId = raw.projectId;
@@ -46,6 +50,8 @@ export class ProjectModel {
     this.ownerId = raw.ownerId;
     this.createdAt = new Date(raw.createdAt);
     this.updatedAt = new Date(raw.updatedAt);
+    this.role = raw.role ?? "editor";
+    this.memberCount = raw.memberCount ?? 0;
   }
 
   static fromApi(raw: RawProject): ProjectModel {
@@ -64,6 +70,8 @@ export class ProjectModel {
       subtitle: this.projectKey,
       description: this.description,
       updatedAt: this.updatedAt,
+      role: this.role,
+      memberCount: this.memberCount,
     };
   }
 

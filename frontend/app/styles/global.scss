@@ -198,6 +198,30 @@ body {
     padding-top: 12px;
     color: var(--color-text-muted);
     font-size: 13px;
+
+    span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+}
+
+.dashboard-add-member-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--color-primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    @include transition(0.15s);
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 .create-project-form {
