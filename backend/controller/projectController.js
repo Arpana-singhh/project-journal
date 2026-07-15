@@ -43,10 +43,25 @@ export const getProjectById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Project not found" });
         }
 
+        const isOwner = project.ownerId.toString() === req.userId;
+        const membership = isOwner
+            ? null
+            : await projectMemberModel.findOne({ projectId: project._id, memberId: req.userId });
+
+        if (!isOwner && !membership) {
+            return res.status(403).json({ success: false, message: "Access denied. You are not a member of this project" });
+        }
+
+        const memberCount = await projectMemberModel.countDocuments({ projectId: project._id });
+
+        const projectObj = project.toJSON();
+        projectObj.role = isOwner ? 'owner' : membership.role;
+        projectObj.memberCount = memberCount;
+
         return res.status(200).json({
             success: true,
             message: "Projects fetched successfully",
-            project,
+            project: projectObj,
         });
     }
     catch (error) {

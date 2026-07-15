@@ -4,6 +4,7 @@ import {
   ProjectModel,
   type CreateProjectApiResponse,
   type GetAllProjectsApiResponse,
+  type GetProjectByIdApiResponse,
   type CreateProjectPayload,
 } from "../../models/project.model";
 
@@ -18,5 +19,10 @@ export class ProjectService {
   static async getAllProjects(): Promise<ProjectModel[]> {
     const response = await apiClient.get<GetAllProjectsApiResponse>(apiRoutes.projects.list);
     return ProjectModel.fromApiList(response.data.projects);
+  }
+
+  static async getProjectById(projectId: string): Promise<ProjectModel> {
+    const response = await apiClient.get<GetProjectByIdApiResponse>(apiRoutes.projects.getById(projectId));
+    return ProjectModel.fromApi(response.data.project);
   }
 }

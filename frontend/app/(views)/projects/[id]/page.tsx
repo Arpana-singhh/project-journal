@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button, Input } from "antd";
+import { toast } from "react-toastify";
 import Navbar from "../../../components/Navbar";
+import { ProjectService } from "../../../service/api/project.services";
+import { ProjectModel } from "../../../models/project.model";
 
 type Tab = "meetings" | "members" | "settings";
 
@@ -23,19 +26,14 @@ type Member = {
   initials: string;
 };
 
-const project = {
-  key: "ACME-WEB",
-  name: "Acme website revamp",
-  client: "Acme Corp",
-  description: "Full redesign of the marketing site",
-};
-
+// Dummy data until the members/meetings APIs are ready.
 const meetings: Meeting[] = [
   { id: "sprint-planning", title: "Sprint planning", date: "Jul 1, 10:00 AM", notesCount: 3 },
   { id: "design-review", title: "Design review", date: "Jun 24, 2:00 PM", notesCount: 4 },
   { id: "kickoff", title: "Kickoff", date: "Jun 10, 9:00 AM", notesCount: 4 },
 ];
 
+// Dummy data until the members API is ready.
 const members: Member[] = [
   { id: "jordan", name: "Jordan Lee", email: "jordan@acme.com", role: "Owner", initials: "JL" },
   { id: "you", name: "You", email: "you@acme.com", role: "Editor", initials: "YO" },
@@ -52,6 +50,36 @@ const TABS: { id: Tab; label: string }[] = [
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<Tab>("meetings");
+  const [project, setProject] = useState<ProjectModel | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadProject = async () => {
+    if (!params.id) return;
+
+    try {
+      const data = await ProjectService.getProjectById(params.id);
+      setProject(data);
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || "Could not load project.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProject();
+  }, [params.id]);
+
+  if (isLoading || !project) {
+    return (
+      <>
+        <Navbar />
+        <div className="container">
+          <div className="dashboard-card">Loading project…</div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -64,13 +92,17 @@ export default function ProjectDetailPage() {
 
           <div className="project-detail-header">
             <div>
-              <h1 className="project-detail-title">{project.name}</h1>
+              <h1 className="project-detail-title">{project.projectName}</h1>
               <p className="project-detail-meta">
-                {project.key} · {project.client} · {project.description}
+                {project.projectKey} · {project.description}
               </p>
             </div>
             <div className="project-detail-actions">
-              <Button>Invite member</Button>
+            {project.role === "owner" && (
+              <>
+                <Button>Invite member</Button>
+              </>
+              )}
               <Button type="primary">+ New meeting</Button>
             </div>
           </div>
@@ -145,20 +177,14 @@ export default function ProjectDetailPage() {
               <label className="modal-label" htmlFor="project-name">
                 Project name
               </label>
-              <Input id="project-name" defaultValue={project.name} />
+              <Input id="project-name" defaultValue={project.projectName} />
 
               <div className="modal-field-row">
                 <div className="modal-field-col">
                   <label className="modal-label" htmlFor="project-key">
                     Project key
                   </label>
-                  <Input id="project-key" defaultValue={project.key} />
-                </div>
-                <div className="modal-field-col">
-                  <label className="modal-label" htmlFor="client-name">
-                    Client name
-                  </label>
-                  <Input id="client-name" defaultValue={project.client} />
+                  <Input id="project-key" defaultValue={project.projectKey} />
                 </div>
               </div>
 
@@ -168,7 +194,7 @@ export default function ProjectDetailPage() {
               <Input.TextArea
                 id="description"
                 rows={3}
-                defaultValue="Full redesign of the marketing site ahead of the Q3 launch."
+                defaultValue={project.description}
               />
 
               <div className="settings-save-row">

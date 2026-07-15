@@ -25,6 +25,12 @@ export type GetAllProjectsApiResponse = {
   projects: RawProject[];
 };
 
+export type GetProjectByIdApiResponse = {
+  success: boolean;
+  message: string;
+  project: RawProject;
+};
+
 export type CreateProjectPayload = {
   projectName: string;
   projectKey: string;

@@ -6,6 +6,7 @@ const apiRoutes = {
   projects: {
     create: "/projects",
     list: "/projects",
+    getById: (id: string) => `/projects/${id}`,
   },
 };
 
