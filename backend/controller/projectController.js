@@ -1,4 +1,5 @@
 import projectModel from '../models/projectModel.js';
+import projectMemberModel from '../models/projectMemberModel.js';
 
 export const createProject = async (req, res) => {
     const { projectName, projectKey, description } = req.body;
@@ -56,12 +57,35 @@ export const getProjectById = async (req, res) => {
 
 export const getAllProjects = async (req, res) => {
     try {
-        const projects = await projectModel.find({ ownerId: req.userId }).sort({ createdAt: -1 });
+        const memberships = await projectMemberModel.find({ memberId: req.userId });
+        const memberProjectIds = memberships.map((m) => m.projectId);
+
+        const projects = await projectModel
+            .find({ $or: [{ ownerId: req.userId }, { _id: { $in: memberProjectIds } }] })
+            .sort({ createdAt: -1 });
+
+        const projectIds = projects.map((p) => p._id);
+
+        const counts = await projectMemberModel.aggregate([
+            { $match: { projectId: { $in: projectIds } } },
+            { $group: { _id: "$projectId", count: { $sum: 1 } } },
+        ]);
+        const countByProjectId = new Map(counts.map((c) => [c._id.toString(), c.count]));
+        const roleByProjectId = new Map(memberships.map((m) => [m.projectId.toString(), m.role]));
+
+        const projectsWithMeta = projects.map((project) => {
+            const projectObj = project.toJSON();
+            projectObj.role = project.ownerId.toString() === req.userId
+                ? 'owner'
+                : roleByProjectId.get(project._id.toString());
+            projectObj.memberCount = countByProjectId.get(project._id.toString()) || 0;
+            return projectObj;
+        });
 
         return res.status(200).json({
             success: true,
             message: "Project fetched successfully",
-            projects,
+            projects: projectsWithMeta,
         });
     }
     catch (error) {

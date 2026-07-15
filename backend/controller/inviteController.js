@@ -5,11 +5,11 @@ import inviteLinkModel from '../models/inviteLinkModel.js';
 const DEFAULT_EXPIRY_DAYS = 7;
 
 export const createInviteLink = async (req, res) => {
-    const { id } = req.params;
+    const { projectId } = req.params;
     const { expiresInDays, maxMembers } = req.body || {};
 
     try {
-        const project = await projectModel.findById(id);
+        const project = await projectModel.findById(projectId);
 
         if (!project) {
             return res.status(404).json({ success: false, message: "Project not found" });
@@ -22,11 +22,18 @@ export const createInviteLink = async (req, res) => {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + (expiresInDays || DEFAULT_EXPIRY_DAYS));
 
+        await projectMemberModel.updateOne(
+            { projectId: project._id, memberId: req.userId },
+            { $setOnInsert: { role: 'owner' } },
+            { upsert: true }
+        );
+
         const invite = await inviteLinkModel.create({
             projectId: project._id,
             createdBy: req.userId,
             expiresAt,
             maxMembers: maxMembers || null,
+            memberCount: 1,
         });
 
         const inviteLink = `${process.env.FRONTEND_URL}/invite/${invite.token}`;
@@ -96,17 +103,17 @@ export const acceptInvite = async (req, res) => {
 }
 
 export const getProjectMembers = async (req, res) => {
-    const { id } = req.params;
+    const { projectId } = req.params;
 
     try {
-        const project = await projectModel.findById(id);
+        const project = await projectModel.findById(projectId);
 
         if (!project) {
             return res.status(404).json({ success: false, message: "Project not found" });
         }
 
         const members = await projectMemberModel
-            .find({ projectId: id })
+            .find({ projectId })
             .populate('memberId', 'name email avatar');
 
         return res.status(200).json({

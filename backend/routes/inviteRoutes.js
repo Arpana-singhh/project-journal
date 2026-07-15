@@ -5,8 +5,8 @@ import { isOwner } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-router.post("/projects/:id/invite", authMiddleware, isOwner, createInviteLink);
+router.post("/projects/:projectId/invite", authMiddleware, isOwner, createInviteLink);
 router.post("/invite/:token/accept", authMiddleware, acceptInvite);
-router.get("/projects/:id/members", authMiddleware, getProjectMembers);
+router.get("/projects/:projectId/members", authMiddleware, getProjectMembers);
 
 export default router;
