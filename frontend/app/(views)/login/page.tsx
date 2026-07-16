@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import AuthLayout from "../../components/AuthLayout";
+
+const POST_LOGIN_REDIRECT_KEY = "postLoginRedirectUrl";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +13,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // The proxy redirects here with ?callbackUrl=<protected path the user was
+  // trying to reach> (e.g. an /invite link) when it bounces an unauthorized
+  // request. Stash it so it survives even if the user reloads this page.
+  useEffect(() => {
+    const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+    if (callbackUrl) {
+      sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, callbackUrl);
+    }
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,7 +46,13 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      const redirectUrl = sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+      if (redirectUrl) {
+        sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+        router.push(redirectUrl);
+      } else {
+        router.push("/dashboard");
+      }
     } finally {
       setIsSubmitting(false);
     }

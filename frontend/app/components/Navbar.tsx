@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import { FiLogOut } from "react-icons/fi";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -30,7 +32,17 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
+            <button
+              type="button"
+              className="app-navbar-logout-btn"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+            >
+              <FiLogOut />
+              Logout
+            </button>
         </nav>
+
+
       </div>
     </header>
   );
