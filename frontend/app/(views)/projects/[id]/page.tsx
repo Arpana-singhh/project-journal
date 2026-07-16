@@ -10,6 +10,7 @@ import type { SerializedError } from "@reduxjs/toolkit";
 import Navbar from "../../../components/Navbar";
 import ConfirmModal from "../../../components/ConfirmModal";
 import AddMemberModal from "../../../components/AddMemberModal";
+import CreateMeetingModal from "../../../components/CreateMeetingModal";
 import {
   useGetProjectByIdAsModelQuery,
   useUpdateProjectAsModelMutation,
@@ -66,6 +67,7 @@ export default function ProjectDetailPage() {
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [isCreateMeetingModalOpen, setIsCreateMeetingModalOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState({
     projectName: "",
     projectKey: "",
@@ -145,7 +147,9 @@ export default function ProjectDetailPage() {
                 <Button onClick={() => setIsAddMemberModalOpen(true)}>Invite member</Button>
               </>
               )}
-              <Button type="primary">+ New meeting</Button>
+              <Button type="primary" onClick={() => setIsCreateMeetingModalOpen(true)}>
+                + New meeting
+              </Button>
             </div>
           </div>
 
@@ -289,6 +293,14 @@ export default function ProjectDetailPage() {
         open={isAddMemberModalOpen}
         projectId={params.id}
         onClose={() => setIsAddMemberModalOpen(false)}
+      />
+
+      <CreateMeetingModal
+        open={isCreateMeetingModalOpen}
+        onClose={() => setIsCreateMeetingModalOpen(false)}
+        onCreate={() => {
+          setIsCreateMeetingModalOpen(false);
+        }}
       />
     </>
   );
