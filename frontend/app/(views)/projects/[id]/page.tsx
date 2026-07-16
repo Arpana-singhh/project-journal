@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button, Input } from "antd";
 import { toast } from "react-toastify";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import type { SerializedError } from "@reduxjs/toolkit";
 import Navbar from "../../../components/Navbar";
@@ -16,39 +17,15 @@ import {
   useUpdateProjectAsModelMutation,
   useDeleteProjectMutation,
 } from "../../../store/api/projectsApi";
+import {
+  useGetMeetingsListAsModelQuery,
+  useDeleteMeetingAsModelMutation,
+} from "../../../store/api/meetingsApi";
+import { useGetProjectMembersAsModelsQuery } from "../../../store/api/invitesApi";
 import { getApiErrorMessage } from "../../../store/api/apiError";
+import type { MeetingModel } from "../../../models/meeting.model";
 
 type Tab = "meetings" | "members" | "settings";
-
-type Meeting = {
-  id: string;
-  title: string;
-  date: string;
-  notesCount: number;
-};
-
-type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: "Owner" | "Editor";
-  initials: string;
-};
-
-// Dummy data until the members/meetings APIs are ready.
-const meetings: Meeting[] = [
-  { id: "sprint-planning", title: "Sprint planning", date: "Jul 1, 10:00 AM", notesCount: 3 },
-  { id: "design-review", title: "Design review", date: "Jun 24, 2:00 PM", notesCount: 4 },
-  { id: "kickoff", title: "Kickoff", date: "Jun 10, 9:00 AM", notesCount: 4 },
-];
-
-// Dummy data until the members API is ready.
-const members: Member[] = [
-  { id: "jordan", name: "Jordan Lee", email: "jordan@acme.com", role: "Owner", initials: "JL" },
-  { id: "you", name: "You", email: "you@acme.com", role: "Editor", initials: "YO" },
-  { id: "priya", name: "Priya Sharma", email: "priya@acme.com", role: "Editor", initials: "PS" },
-  { id: "ravi", name: "Ravi Kumar", email: "ravi@acme.com", role: "Editor", initials: "RK" },
-];
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "meetings", label: "Meetings" },
@@ -63,11 +40,26 @@ export default function ProjectDetailPage() {
   const { data: project, isLoading, error } = useGetProjectByIdAsModelQuery(params.id, {
     skip: !params.id,
   });
+  const {
+    data: meetingsData,
+    isLoading: isMeetingsLoading,
+    error: meetingsError,
+  } = useGetMeetingsListAsModelQuery(params.id, {
+    skip: !params.id,
+  });
+  const {
+    data: membersData,
+    isLoading: isMembersLoading,
+    error: membersError,
+  } = useGetProjectMembersAsModelsQuery(params.id, { skip: !params.id });
   const [updateProject, { isLoading: isSaving }] = useUpdateProjectAsModelMutation();
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
+  const [deleteMeeting, { isLoading: isDeletingMeeting }] = useDeleteMeetingAsModelMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isCreateMeetingModalOpen, setIsCreateMeetingModalOpen] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState<MeetingModel | null>(null);
+  const [meetingPendingDelete, setMeetingPendingDelete] = useState<MeetingModel | null>(null);
   const [settingsForm, setSettingsForm] = useState({
     projectName: "",
     projectKey: "",
@@ -77,6 +69,14 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (error) toast.error(getApiErrorMessage(error));
   }, [error]);
+
+  useEffect(() => {
+    if (meetingsError) toast.error(getApiErrorMessage(meetingsError));
+  }, [meetingsError]);
+
+  useEffect(() => {
+    if (membersError) toast.error(getApiErrorMessage(membersError));
+  }, [membersError]);
 
   useEffect(() => {
     if (project) {
@@ -94,6 +94,18 @@ export default function ProjectDetailPage() {
     try {
       const updated = await updateProject(params.id, settingsForm);
       toast.success(`Project "${updated.projectName}" updated successfully.`);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err as FetchBaseQueryError | SerializedError));
+    }
+  };
+
+  const handleDeleteMeeting = async () => {
+    if (!meetingPendingDelete) return;
+
+    try {
+      await deleteMeeting(meetingPendingDelete.meetingId, meetingPendingDelete.projectId);
+      toast.success("Meeting deleted successfully.");
+      setMeetingPendingDelete(null);
     } catch (err) {
       toast.error(getApiErrorMessage(err as FetchBaseQueryError | SerializedError));
     }
@@ -130,15 +142,15 @@ export default function ProjectDetailPage() {
       <Navbar />
       <div className="container">
         <div className="dashboard-card">
-          <Link href="/dashboard" className="project-back-link">
+          <Link href="/projects" className="project-back-link">
             ← All projects
           </Link>
 
           <div className="project-detail-header">
             <div>
-              <h1 className="project-detail-title">{project.projectName}</h1>
+              <h1 className="project-detail-title">{meetingsData?.project.projectName}</h1>
               <p className="project-detail-meta">
-                {project.projectKey} · {project.description}
+                {meetingsData?.project.projectKey} · {meetingsData?.project.description}
               </p>
             </div>
             <div className="project-detail-actions">
@@ -147,7 +159,13 @@ export default function ProjectDetailPage() {
                 <Button onClick={() => setIsAddMemberModalOpen(true)}>Invite member</Button>
               </>
               )}
-              <Button type="primary" onClick={() => setIsCreateMeetingModalOpen(true)}>
+              <Button
+                type="primary"
+                onClick={() => {
+                  setEditingMeeting(null);
+                  setIsCreateMeetingModalOpen(true);
+                }}
+              >
                 + New meeting
               </Button>
             </div>
@@ -168,50 +186,85 @@ export default function ProjectDetailPage() {
 
           {activeTab === "meetings" && (
             <div className="meeting-list">
-              {meetings.map((meeting) => (
-                <Link
-                  key={meeting.id}
-                  href={`/projects/${params.id}/meetings/${meeting.id}`}
-                  className="meeting-item"
-                >
-                  <div>
-                    <p className="meeting-item-title">{meeting.title}</p>
-                    <p className="meeting-item-meta">
-                      {meeting.date} · {meeting.notesCount} notes
-                    </p>
+              {isMeetingsLoading && <p className="members-footer-note">Loading meetings…</p>}
+
+              {!isMeetingsLoading && (meetingsData?.meetings.length ?? 0) === 0 && (
+                <p className="members-footer-note">No meetings yet.</p>
+              )}
+
+              {(meetingsData?.meetings ?? []).map((meeting) => {
+                const { id, title, date, notesCount } = meeting.toListItem();
+                return (
+                  <div key={id} className="meeting-item">
+                    <Link
+                      href={`/projects/${params.id}/meetings/${id}`}
+                      className="meeting-item-link"
+                    >
+                      <p className="meeting-item-title">{title}</p>
+                      <p className="meeting-item-meta">
+                        {date} · {notesCount} notes
+                      </p>
+                    </Link>
+                    <div className="meeting-item-actions">
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<FiEdit2 />}
+                        onClick={() => {
+                          setEditingMeeting(meeting);
+                          setIsCreateMeetingModalOpen(true);
+                        }}
+                      />
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<FiTrash2 />}
+                        onClick={() => setMeetingPendingDelete(meeting)}
+                      />
+                    </div>
                   </div>
-                  <span className="meeting-item-arrow">→</span>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           )}
 
           {activeTab === "members" && (
             <div>
               <div className="members-header">
-                <span className="members-count">{members.length} members</span>
-                <Button onClick={() => setIsAddMemberModalOpen(true)}>Invite member</Button>
+                <span className="members-count">{membersData?.length ?? 0} members</span>
               </div>
-              <div className="member-list">
-                {members.map((member) => (
-                  <div key={member.id} className="member-item">
-                    <div className="member-item-left">
-                      <span className="member-avatar">{member.initials}</span>
-                      <div>
-                        <p className="member-name">{member.name}</p>
-                        <p className="member-email">{member.email}</p>
+
+              {isMembersLoading && <p className="members-footer-note">Loading members…</p>}
+
+              {!isMembersLoading && (membersData?.length ?? 0) === 0 && (
+                <p className="members-footer-note">No members yet.</p>
+              )}
+
+              {!isMembersLoading && (membersData?.length ?? 0) > 0 && (
+                <div className="member-list">
+                  {membersData!.map((member) => {
+                    const { id, name, email, role, initials } = member.toListItem();
+                    return (
+                      <div key={id} className="member-item">
+                        <div className="member-item-left">
+                          <span className="member-avatar">{initials}</span>
+                          <div>
+                            <p className="member-name">{name}</p>
+                            <p className="member-email">{email}</p>
+                          </div>
+                        </div>
+                        <span
+                          className={`dashboard-role-badge${role === "Editor" ? " editor" : ""}`}
+                        >
+                          {role}
+                        </span>
                       </div>
-                    </div>
-                    <span
-                      className={`dashboard-role-badge${
-                        member.role === "Editor" ? " editor" : ""
-                      }`}
-                    >
-                      {member.role}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
+
               <p className="members-footer-note">
                 Only the owner can invite members or remove them from a project.
               </p>
@@ -297,10 +350,21 @@ export default function ProjectDetailPage() {
 
       <CreateMeetingModal
         open={isCreateMeetingModalOpen}
+        projectId={params.id}
+        meeting={editingMeeting ?? undefined}
         onClose={() => setIsCreateMeetingModalOpen(false)}
-        onCreate={() => {
-          setIsCreateMeetingModalOpen(false);
-        }}
+        onSaved={() => setIsCreateMeetingModalOpen(false)}
+      />
+
+      <ConfirmModal
+        open={!!meetingPendingDelete}
+        title="Delete meeting"
+        message={`Are you sure you want to delete "${meetingPendingDelete?.title}"? This can't be undone.`}
+        confirmText="Yes, delete"
+        danger
+        isLoading={isDeletingMeeting}
+        onConfirm={handleDeleteMeeting}
+        onCancel={() => setMeetingPendingDelete(null)}
       />
     </>
   );

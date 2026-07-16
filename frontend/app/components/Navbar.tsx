@@ -8,7 +8,6 @@ import { FiLogOut } from "react-icons/fi";
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/projects", label: "Projects" },
-  { href: "/meeting-notes", label: "Meeting Notes" },
 ];
 
 export default function Navbar() {

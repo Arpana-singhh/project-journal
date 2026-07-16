@@ -2,16 +2,17 @@
 
 import { Modal, Input, Button, DatePicker } from "antd";
 import { Formik, Form, Field, type FieldProps, type FormikHelpers } from "formik";
-import type { Dayjs } from "dayjs";
+import { toast } from "react-toastify";
+import dayjs, { type Dayjs } from "dayjs";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import type { SerializedError } from "@reduxjs/toolkit";
+import { useCreateMeetingAsModelMutation, useUpdateMeetingAsModelMutation } from "../store/api/meetingsApi";
+import { getApiErrorMessage } from "../store/api/apiError";
+import type { MeetingModel } from "../models/meeting.model";
 
 type CreateMeetingValues = {
   title: string;
   dateTime: Dayjs | null;
-};
-
-const initialValues: CreateMeetingValues = {
-  title: "",
-  dateTime: null,
 };
 
 function validate(values: CreateMeetingValues) {
@@ -27,26 +28,68 @@ function validate(values: CreateMeetingValues) {
 
 type CreateMeetingModalProps = {
   open: boolean;
+  projectId: string;
+  // Presence of `meeting` switches the modal into edit mode - prefilling
+  // the form and calling updateMeeting instead of createMeeting.
+  meeting?: MeetingModel;
   onClose: () => void;
-  onCreate: (values: CreateMeetingValues) => void;
+  onSaved: () => void;
 };
 
 export default function CreateMeetingModal({
   open,
+  projectId,
+  meeting,
   onClose,
-  onCreate,
+  onSaved,
 }: CreateMeetingModalProps) {
-  const handleSubmit = (
+  const [createMeeting] = useCreateMeetingAsModelMutation();
+  const [updateMeeting] = useUpdateMeetingAsModelMutation();
+  const isEditMode = Boolean(meeting);
+
+  const initialValues: CreateMeetingValues = {
+    title: meeting?.title ?? "",
+    dateTime: meeting ? dayjs(meeting.meetingDateTime) : null,
+  };
+
+  const handleSubmit = async (
     values: CreateMeetingValues,
     { resetForm }: FormikHelpers<CreateMeetingValues>
   ) => {
-    onCreate(values);
-    resetForm();
+    const payload = {
+      title: values.title,
+      meetingDateTime: values.dateTime!.toISOString(),
+    };
+
+    try {
+      if (meeting) {
+        await updateMeeting(meeting.meetingId, projectId, payload);
+        toast.success("Meeting updated successfully.");
+      } else {
+        await createMeeting(projectId, payload);
+        toast.success("Meeting created successfully.");
+      }
+      resetForm();
+      onSaved();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err as FetchBaseQueryError | SerializedError));
+    }
   };
 
   return (
-    <Modal title="New meeting" open={open} onCancel={onClose} footer={null} destroyOnHidden>
-      <Formik initialValues={initialValues} validate={validate} onSubmit={handleSubmit}>
+    <Modal
+      title={isEditMode ? "Edit meeting" : "New meeting"}
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      destroyOnHidden
+    >
+      <Formik
+        initialValues={initialValues}
+        validate={validate}
+        onSubmit={handleSubmit}
+        enableReinitialize
+      >
         {({ values, errors, touched, isSubmitting, setFieldValue, setFieldTouched }) => (
           <Form className="create-project-form">
             <label className="modal-label" htmlFor="title">
@@ -86,7 +129,7 @@ export default function CreateMeetingModal({
             <div className="modal-actions">
               <Button onClick={onClose}>Cancel</Button>
               <Button type="primary" htmlType="submit" loading={isSubmitting}>
-                Create meeting
+                {isEditMode ? "Save changes" : "Create meeting"}
               </Button>
             </div>
           </Form>

@@ -1,5 +1,10 @@
 import { baseApi } from "./baseApi";
 import apiRoutes from "@/config/apiRoutes";
+import {
+  ProjectMemberModel,
+  type GetProjectMembersApiResponse,
+  type RawProjectMember,
+} from "../../models/projectMember.model";
 
 type CreateInviteLinkApiResponse = {
   success: boolean;
@@ -38,7 +43,10 @@ export const invitesApi = baseApi.injectEndpoints({
       transformResponse: (response: CreateInviteLinkApiResponse) => response.inviteLink,
       // Creating a link makes the owner a member (memberCount goes to 1) -
       // refresh this project's own cache so the "Add member" UI updates.
-      invalidatesTags: (result, error, { projectId }) => [{ type: "Project" as const, id: projectId }],
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: "Project" as const, id: projectId },
+        { type: "Member" as const, id: projectId },
+      ],
     }),
     acceptInvite: builder.mutation<ProjectMember, string>({
       query: (token) => ({
@@ -47,10 +55,36 @@ export const invitesApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: AcceptInviteApiResponse) => response.member,
       invalidatesTags: (result) =>
-        result ? [{ type: "Project" as const, id: result.projectId }] : [],
+        result
+          ? [
+              { type: "Project" as const, id: result.projectId },
+              { type: "Member" as const, id: result.projectId },
+            ]
+          : [],
+    }),
+    getProjectMembers: builder.query<RawProjectMember[], string>({
+      query: (projectId) => apiRoutes.invites.members(projectId),
+      transformResponse: (response: GetProjectMembersApiResponse) => response.members,
+      providesTags: (result, error, projectId) => [{ type: "Member" as const, id: projectId }],
     }),
   }),
   overrideExisting: process.env.NODE_ENV === "development",
 });
 
-export const { useCreateInviteLinkMutation, useAcceptInviteMutation } = invitesApi;
+export const {
+  useCreateInviteLinkMutation,
+  useAcceptInviteMutation,
+  useGetProjectMembersQuery,
+} = invitesApi;
+
+// Wraps useGetProjectMembersQuery so components only ever see
+// ProjectMemberModel, never the raw store shape.
+export function useGetProjectMembersAsModelsQuery(projectId: string, options?: { skip?: boolean }) {
+  return invitesApi.useGetProjectMembersQuery(projectId, {
+    ...options,
+    selectFromResult: ({ data, ...rest }) => ({
+      data: data ? ProjectMemberModel.fromApiList(data) : undefined,
+      ...rest,
+    }),
+  });
+}
