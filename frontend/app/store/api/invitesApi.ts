@@ -13,6 +13,20 @@ type CreateInviteLinkPayload = {
   maxMembers?: number;
 };
 
+type ProjectMember = {
+  projectMemberId: string;
+  projectId: string;
+  memberId: string;
+  role: "owner" | "editor";
+  joinedAt: string;
+};
+
+type AcceptInviteApiResponse = {
+  success: boolean;
+  message: string;
+  member: ProjectMember;
+};
+
 export const invitesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createInviteLink: builder.mutation<string, CreateInviteLinkPayload>({
@@ -26,8 +40,17 @@ export const invitesApi = baseApi.injectEndpoints({
       // refresh this project's own cache so the "Add member" UI updates.
       invalidatesTags: (result, error, { projectId }) => [{ type: "Project" as const, id: projectId }],
     }),
+    acceptInvite: builder.mutation<ProjectMember, string>({
+      query: (token) => ({
+        url: apiRoutes.invites.accept(token),
+        method: "POST",
+      }),
+      transformResponse: (response: AcceptInviteApiResponse) => response.member,
+      invalidatesTags: (result) =>
+        result ? [{ type: "Project" as const, id: result.projectId }] : [],
+    }),
   }),
   overrideExisting: process.env.NODE_ENV === "development",
 });
 
-export const { useCreateInviteLinkMutation } = invitesApi;
+export const { useCreateInviteLinkMutation, useAcceptInviteMutation } = invitesApi;

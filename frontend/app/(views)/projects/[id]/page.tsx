@@ -9,6 +9,7 @@ import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import type { SerializedError } from "@reduxjs/toolkit";
 import Navbar from "../../../components/Navbar";
 import ConfirmModal from "../../../components/ConfirmModal";
+import AddMemberModal from "../../../components/AddMemberModal";
 import {
   useGetProjectByIdAsModelQuery,
   useUpdateProjectAsModelMutation,
@@ -64,6 +65,7 @@ export default function ProjectDetailPage() {
   const [updateProject, { isLoading: isSaving }] = useUpdateProjectAsModelMutation();
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState({
     projectName: "",
     projectKey: "",
@@ -140,7 +142,7 @@ export default function ProjectDetailPage() {
             <div className="project-detail-actions">
             {project.role === "owner" && (
               <>
-                <Button>Invite member</Button>
+                <Button onClick={() => setIsAddMemberModalOpen(true)}>Invite member</Button>
               </>
               )}
               <Button type="primary">+ New meeting</Button>
@@ -184,7 +186,7 @@ export default function ProjectDetailPage() {
             <div>
               <div className="members-header">
                 <span className="members-count">{members.length} members</span>
-                <Button>Invite member</Button>
+                <Button onClick={() => setIsAddMemberModalOpen(true)}>Invite member</Button>
               </div>
               <div className="member-list">
                 {members.map((member) => (
@@ -281,6 +283,12 @@ export default function ProjectDetailPage() {
         isLoading={isDeleting}
         onConfirm={handleDeleteProject}
         onCancel={() => setIsDeleteModalOpen(false)}
+      />
+
+      <AddMemberModal
+        open={isAddMemberModalOpen}
+        projectId={params.id}
+        onClose={() => setIsAddMemberModalOpen(false)}
       />
     </>
   );

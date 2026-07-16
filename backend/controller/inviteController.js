@@ -36,7 +36,7 @@ export const createInviteLink = async (req, res) => {
             memberCount: 1,
         });
 
-        const inviteLink = `${process.env.FRONTEND_URL}/invite/${invite.token}`;
+        const inviteLink = `${process.env.FRONTEND_URL}/invite?token=${invite.token}`;
 
         return res.status(201).json({
             success: true,

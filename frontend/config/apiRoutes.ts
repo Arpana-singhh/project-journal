@@ -10,6 +10,7 @@ const apiRoutes = {
   },
   invites: {
     create: (projectId: string) => `/projects/${projectId}/invite`,
+    accept: (token: string) => `/invite/${token}/accept`,
   },
 };
 

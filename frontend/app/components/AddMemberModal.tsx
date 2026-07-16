@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Modal, Input, Button } from "antd";
+import { Modal, Input, Button, Dropdown } from "antd";
+import type { MenuProps } from "antd";
 import { toast } from "react-toastify";
-import { FiCopy, FiShare2 } from "react-icons/fi";
+import { FiCopy, FiShare2, FiMail } from "react-icons/fi";
+import { FaWhatsapp, FaLinkedin, FaXTwitter } from "react-icons/fa6";
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import type { SerializedError } from "@reduxjs/toolkit";
 import { useCreateInviteLinkMutation } from "../store/api/invitesApi";
@@ -45,11 +47,60 @@ export default function AddMemberModal({ open, projectId, onClose }: AddMemberMo
       } catch {
         // User dismissed the native share sheet - nothing to do.
       }
-      return;
     }
-
-    await handleCopy();
   };
+
+  const shareText = "Join my project";
+  const shareMenuItems: MenuProps["items"] = [
+    {
+      key: "whatsapp",
+      label: "WhatsApp",
+      icon: <FaWhatsapp color="#25d366" />,
+      onClick: () =>
+        window.open(
+          `https://wa.me/?text=${encodeURIComponent(`${shareText}: ${inviteLink}`)}`,
+          "_blank"
+        ),
+    },
+    {
+      key: "email",
+      label: "Email",
+      icon: <FiMail color="#666666" />,
+      onClick: () =>
+        window.open(
+          `mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(inviteLink)}`,
+          "_blank"
+        ),
+    },
+    {
+      key: "twitter",
+      label: "Twitter",
+      icon: <FaXTwitter color="#000000" />,
+      onClick: () =>
+        window.open(
+          `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${shareText}: ${inviteLink}`)}`,
+          "_blank"
+        ),
+    },
+    {
+      key: "linkedin",
+      label: "LinkedIn",
+      icon: <FaLinkedin color="#0a66c2" />,
+      onClick: () =>
+        window.open(
+          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(inviteLink)}`,
+          "_blank"
+        ),
+    },
+    {
+      key: "copy",
+      label: "Copy link",
+      icon: <FiCopy color="#666666" />,
+      onClick: handleCopy,
+    },
+  ];
+
+  const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
   return (
     <Modal title="Invite a member" open={open} onCancel={onClose} footer={null} destroyOnHidden>
@@ -61,9 +112,17 @@ export default function AddMemberModal({ open, projectId, onClose }: AddMemberMo
         <Button icon={<FiCopy />} onClick={handleCopy} disabled={!inviteLink}>
           Copy
         </Button>
-        <Button type="primary" icon={<FiShare2 />} onClick={handleShare} disabled={!inviteLink}>
-          Share
-        </Button>
+        {canNativeShare ? (
+          <Button type="primary" icon={<FiShare2 />} onClick={handleShare} disabled={!inviteLink}>
+            Share
+          </Button>
+        ) : (
+          <Dropdown menu={{ items: shareMenuItems }} trigger={["click"]} disabled={!inviteLink}>
+            <Button type="primary" icon={<FiShare2 />} disabled={!inviteLink}>
+              Share
+            </Button>
+          </Dropdown>
+        )}
       </div>
     </Modal>
   );
