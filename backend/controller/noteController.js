@@ -2,7 +2,6 @@ import meetingModel from '../models/meetingModel.js';
 import projectMemberModel from '../models/projectMemberModel.js';
 import projectModel from '../models/projectModel.js';
 import noteModel from '../models/noteModel.js';
-import userModel from '../models/userModel.js';
 
 export const createNote = async (req, res) => {
     const { meetingId } = req.params;
@@ -44,12 +43,12 @@ export const createNote = async (req, res) => {
         meeting.notesCount += 1;
         await meeting.save();
 
-        const author = await userModel.findById(req.userId);
+        await note.populate('authorId', 'name email avatar');
 
         return res.status(201).json({
             success: true,
             message: "Note added successfully",
-                note,
+            note,
         });
     }
     catch (error) {

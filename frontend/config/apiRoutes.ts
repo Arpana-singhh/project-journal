@@ -19,6 +19,12 @@ const apiRoutes = {
     update: (meetingId: string) => `/meetings/${meetingId}`,
     delete: (meetingId: string) => `/meetings/${meetingId}`,
   },
+  notes: {
+    create: (meetingId: string) => `/meetings/${meetingId}/notes`,
+    list: (meetingId: string) => `/meetings/${meetingId}/notes`,
+    update: (noteId: string) => `/notes/${noteId}`,
+    delete: (noteId: string) => `/notes/${noteId}`,
+  },
 };
 
 export default apiRoutes;
